@@ -184,7 +184,7 @@ class LyricVideoCreator:
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 self.lyrics = [p.strip() for p in f.read().split("\n\n") if p.strip()]
-
+            self.lyrics.insert(0, "")
             self.lyrics_file = path
             filename = os.path.basename(path)
             self.lyrics_button.config(text=f"📄 Load Lyrics: {filename}")
@@ -217,6 +217,7 @@ class LyricVideoCreator:
         self.timestamps = []
         self.current_index = 0
         self.update_lyrics_display()
+        self.timestamps.append(0)
         self.next_button.config(state="normal")
 
     def mark_timestamp(self):
@@ -229,6 +230,7 @@ class LyricVideoCreator:
             pygame.mixer.music.stop()
             self.next_button.config(state="disabled")
             self.export_button.config(state="normal")
+            self.timestamps.pop()
             messagebox.showinfo("Done", "Timestamps completed! You can now export the video.")
 
     def update_lyrics_display(self):
@@ -245,14 +247,12 @@ class LyricVideoCreator:
         self.show_progress_bar()
         self.export_button.config(state="disabled")
 
-        # Start export in separate thread
-
-        self.export_video(output_path)
-
-    def export_video(self, output_path):
         width, height = 1920, 1080
         clips = []
         total_steps = len(self.timestamps) + 2  # +2 for concatenation and audio steps
+        print(len(self.timestamps))
+        print()
+        print(len(self.lyrics))
         for i in range(len(self.timestamps)):
             start = self.timestamps[i]
             end = self.timestamps[i + 1] if i + 1 < len(self.timestamps) else None
@@ -286,7 +286,7 @@ class LyricVideoCreator:
         final_output = final_output.with_audio(AudioFileClip(self.instrumental_audio_file))
         # Writing video file
         final_output.write_videofile(output_path, fps=24)
-        self.root.after(0, self.export_success)
+        self.export_success()
 
     def export_success(self):
         self.hide_progress_bar()
