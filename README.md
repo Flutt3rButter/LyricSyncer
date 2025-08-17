@@ -59,8 +59,5 @@ More lyrics...
 3. Click "Mark Timestamp / Next" to timestamp the current paragraph and move to the next one
 4. After timestamping all the lyrics you can export the video.
 
-The final video shows the current lyric on the top and the next on the bottom.
-It's synced to the manually set timestamps
-
 The final video displays the current lyric at the top with a preview of the next line below, 
 all timed to your manually marked timestamps.
