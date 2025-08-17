@@ -246,63 +246,47 @@ class LyricVideoCreator:
         self.export_button.config(state="disabled")
 
         # Start export in separate thread
-        export_thread = threading.Thread(target=self.export_video_thread, args=(output_path,))
-        export_thread.daemon = True
-        export_thread.start()
 
-    def export_video_thread(self, output_path):
-        try:
-            width, height = 1920, 1080
-            clips = []
-            total_steps = len(self.timestamps) + 2  # +2 for concatenation and audio steps
+        self.export_video(output_path)
 
-            for i in range(len(self.timestamps)):
-                start = self.timestamps[i]
-                end = self.timestamps[i + 1] if i + 1 < len(self.timestamps) else None
-                duration = (end - start) if end else 2
-
-                current = self.lyrics[i]
-                next_line = self.lyrics[i + 1] if i + 1 < len(self.lyrics) else ""
-
-                # Update progress
-                self.update_progress(i + 1, total_steps, f"Processing lyric: {current[:30]}...")
-
-                # Create background image
-                bg_img = Image.new('RGB', (width, height), (0, 0, 0))  # Black background
-
-                # Create current text image
-                current_img = self.create_text_image(
-                    current, width, height, 72, (255, 255, 255, 255), is_current=True
+    def export_video(self, output_path):
+        width, height = 1920, 1080
+        clips = []
+        total_steps = len(self.timestamps) + 2  # +2 for concatenation and audio steps
+        for i in range(len(self.timestamps)):
+            start = self.timestamps[i]
+            end = self.timestamps[i + 1] if i + 1 < len(self.timestamps) else None
+            duration = (end - start) if end else 2
+            current = self.lyrics[i]
+            next_line = self.lyrics[i + 1] if i + 1 < len(self.lyrics) else ""
+            # Update progress
+            self.update_progress(i + 1, total_steps, f"Processing lyric: {current[:30]}...")
+            # Create background image
+            bg_img = Image.new('RGB', (width, height), (0, 0, 0))  # Black background
+            # Create current text image
+            current_img = self.create_text_image(
+                current, width, height, 72, (255, 255, 255, 255), is_current=True
+            )
+            # Composite current text onto background
+            bg_img.paste(current_img, (0, 0), current_img)
+            # Create next text image if there is one
+            if next_line:
+                next_img = self.create_text_image(
+                    next_line, width, height, 64, (128, 128, 128, 255), is_current=False
                 )
-
-                # Composite current text onto background
-                bg_img.paste(current_img, (0, 0), current_img)
-
-                # Create next text image if there is one
-                if next_line:
-                    next_img = self.create_text_image(
-                        next_line, width, height, 64, (128, 128, 128, 255), is_current=False
-                    )
-                    bg_img.paste(next_img, (0, 0), next_img)
-
-                # Create video clip from image
-                img_clip = ImageClip(np.array(bg_img)).set_duration(duration)
-                clips.append(img_clip)
-
-            # Concatenating video clips
-            self.update_progress(len(self.timestamps) + 1, total_steps, "Concatenating video clips...")
-            final_output = concatenate_videoclips(clips)
-
-            # Adding audio
-            self.update_progress(len(self.timestamps) + 2, total_steps, "Adding audio and writing video file...")
-            final_output = final_output.set_audio(AudioFileClip(self.instrumental_audio_file))
-
-            # Writing video file
-            final_output.write_videofile(output_path, fps=24, verbose=False, logger=None)
-            self.root.after(0, self.export_success)
-        except Exception as e:
-            # Error - schedule GUI update in main thread
-            self.root.after(0, lambda: self.export_error(str(e)))
+                bg_img.paste(next_img, (0, 0), next_img)
+            # Create video clip from image
+            img_clip = ImageClip(np.array(bg_img)).with_duration(duration)
+            clips.append(img_clip)
+        # Concatenating video clips
+        self.update_progress(len(self.timestamps) + 1, total_steps, "Concatenating video clips...")
+        final_output = concatenate_videoclips(clips)
+        # Adding audio
+        self.update_progress(len(self.timestamps) + 2, total_steps, "Adding audio and writing video file...")
+        final_output = final_output.with_audio(AudioFileClip(self.instrumental_audio_file))
+        # Writing video file
+        final_output.write_videofile(output_path, fps=24)
+        self.root.after(0, self.export_success)
 
     def export_success(self):
         self.hide_progress_bar()
