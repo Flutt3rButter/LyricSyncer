@@ -15,8 +15,13 @@ python -m venv venv
 ```
 
 ### Activate it
+#### Linux
 ```bash
 source venv/bin/activate
+```
+#### Windows
+```
+venv\Scripts\activate
 ```
 
 ### Install requirements
