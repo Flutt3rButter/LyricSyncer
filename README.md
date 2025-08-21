@@ -3,7 +3,7 @@ A tool to manually timestamp lyrics to a song and export a karaoke video using t
 
 ## Setup
 
-### Depedencies:
+### Dependencies:
 ```
 python
 tkinter
